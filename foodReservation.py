@@ -123,5 +123,5 @@ def cancel_reservation():
     except ValueError:
         print("無効な入力です。0、1、2いずれかの数字を入力してください。")
 
-# メイン関数の実行
+# メインの実行
 main()
