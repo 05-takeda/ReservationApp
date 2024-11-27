@@ -1,14 +1,30 @@
 # 飲食店予約管理システム
 
 from datetime import datetime
+import sqlite3
 
 # 使用する部屋のリスト
 rooms = ['藤', '桜', '椿']
-# 予約を保存するリスト
-reservations = []  
+
+# 予約を保存するデータベースの初期化
+def init_db():
+    conn = sqlite3.connect('reservations.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reservations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            room INTEGER NOT NULL,
+            name TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
 
 # メイン
 def main():
+    # データベースを初期化
+    init_db()
     while True:
         print("\n予約システムメニュー")
         print("1. 新規予約")
@@ -64,14 +80,17 @@ def make_reservation():
         room = int(room_input) # 数値として取得
         if room in [0, 1, 2]:
             name = input("お客様の氏名を入力してください: ")
+            conn = sqlite3.connect('reservations.db')
+            cursor = conn.cursor()
             # 予約の重複確認(同じ日付と部屋で予約があるか確認)
-            for reservation in reservations:
-                if reservation['date'] == date and reservation['room'] == room:
-                    print(f"予約失敗: {date} に {rooms[room]} は既に予約されています。")
-                    return
-            # 重複なくループ終了した場合の処理
-            reservations.append({'date': date, 'room': room, 'name': name}) # 辞書型で追加(append)
-            print(f"予約完了: {date} - {rooms[room]} - {name} 様")
+            cursor.execute("SELECT * FROM reservations WHERE date = ? AND room = ?", (date, room))
+            if cursor.fetchone():
+                print(f"予約失敗: {date} に {rooms[room]} は既に予約されています。")
+            else: # 重複なくループ終了した場合の処理
+                cursor.execute("INSERT INTO reservations (date, room, name) VALUES (?, ?, ?)", (date, room, name))
+                conn.commit()
+                print(f"予約完了: {date} - {rooms[room]} - {name} 様")
+            conn.close()
         else:
             print("無効な番号です。0、1、2のいずれかを選択してください。")
     except ValueError:
@@ -79,17 +98,20 @@ def make_reservation():
 
 # 現在の予約一覧を表示
 def show_reservations():
-    # リストが空のとき
+    conn = sqlite3.connect('reservations.db')
+    cursor = conn.cursor()
+    # 予約を日付順で抽出
+    cursor.execute("SELECT date, room, name FROM reservations ORDER BY date")
+    reservations = cursor.fetchall()
+    conn.close()
+    # データベースが空のとき
     if not reservations:
         print("現在、予約はありません。")
     else:
         print("現在の予約:")
-        # 予約リストを日付順に並べ替える(sorted,lambda)
-        res_sorted = sorted(reservations, key=lambda x:x['date'])
-        for reservation in res_sorted:
-            # 部屋名を表示させるための変数
-            room_name = rooms[reservation['room']]
-            print(f"{reservation['date']} - {room_name} - {reservation['name']} 様")
+        for reservation in reservations:
+            date, room, name = reservation
+            print(f"{date} - {rooms[room]} - {name} 様")
 
 # 予約のキャンセル
 def cancel_reservation():
@@ -100,24 +122,23 @@ def cancel_reservation():
     try:
         room = int(room_input)
         if room in [0, 1, 2]:
-            if not reservations:
-                print("現在、予約はありません。")
-                return
-            for reservation in reservations:
-                if reservation['date'] == date and reservation['room'] == room:
-                    while True:
-                        # クッションメッセージ
-                        answer = input(f"{date} - {rooms[room]} - {reservation['name']} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
-                        if answer.lower() == "y":
-                            reservations.remove(reservation)
-                            print(f"キャンセル完了: {date} - {rooms[room]} - {reservation['name']} 様")
-                            return
-                        elif answer.lower() == "n":
-                            print("予約処理がキャンセルされました。")
-                            return
-                        else:
-                            print("無効な入力です。Y、Nのいずれかを入力してください。")
-            print(f"キャンセル失敗:予約が見つかりません。")
+            conn = sqlite3.connect('reservations.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name FROM reservations WHERE date = ? AND room = ?", (date, room))
+            result = cursor.fetchone()
+            if result:
+                reservation_id, name = result
+                # クッションメッセージ
+                answer = input(f"{date} - {rooms[room]} - {name} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
+                if answer.lower() == "y":
+                    cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id,))
+                    conn.commit()
+                    print(f"キャンセル完了: {date} - {rooms[room]} - {name} 様")
+                else:
+                    print("キャンセル処理が中止されました。")
+            else:
+                print(f"キャンセル失敗: 予約が見つかりません。")
+            conn.close()
         else:
             print("無効な番号です。0、1、2のいずれかを選択してください。")
     except ValueError:
