@@ -80,7 +80,7 @@ def make_reservation():
             room = int(room_input) # 数値として取得
             if room in [0, 1, 2]:
                 conn = sqlite3.connect('reservations.db')
-                cursor = conn.cursor
+                cursor = conn.cursor()
                 cursor.execute("SELECT * FROM reservations WHERE date = ? AND room = ?", (reservation_date, room))
                 # 予約の重複確認(同じ日付と部屋で予約があるか確認)
                 if cursor.fetchone():
@@ -103,10 +103,10 @@ def make_reservation():
 
 # 現在の予約一覧を表示
 def show_reservations():
-    conn = sqlite3.connect('reservation.db')
+    conn = sqlite3.connect('reservations.db')
     cursor = conn.cursor()
     # 予約を日付順で抽出
-    cursor.execute("SELECT date, room, name FROM reservation ORDER BY date")
+    cursor.execute("SELECT date, room, name FROM reservations ORDER BY date")
     reservations = cursor.fetchall()
     conn.close()
     # データベースが空のとき
@@ -139,7 +139,7 @@ def cancel_reservation():
                         # クッションメッセージ
                         answer = input(f"{reservation_date} - {rooms[room]} - {name} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
                         if answer.lower() == "y":
-                            cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id))
+                            cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id,))
                             conn.commit()
                             print(f"キャンセル完了: {reservation_date} - {rooms[room]} - {name} 様")
                             return # 関数の終了
