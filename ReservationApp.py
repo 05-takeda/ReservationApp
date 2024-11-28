@@ -88,7 +88,7 @@ def make_reservation():
                 # 重複なくループ終了した場合の処理
                 else:
                     name = input("お客様の氏名を入力してください: ")
-                    cursor.execute("INSERT INTO reservations(date, room, name) VALUES(?, ?, ?)", (reservation_date, room, name))
+                    cursor.execute("INSERT INTO reservations (date, room, name) VALUES (?, ?, ?)", (reservation_date, room, name))
                     conn.commit()
                     print(f"予約完了: {reservation_date} - {rooms[room]} - {name} 様")
                     break
@@ -160,5 +160,5 @@ def cancel_reservation():
         finally:
             conn.close()
 
-# メイン関数の実行
+# メインの実行
 main()
