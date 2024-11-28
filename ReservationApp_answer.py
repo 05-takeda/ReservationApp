@@ -139,7 +139,7 @@ def cancel_reservation():
                         # クッションメッセージ
                         answer = input(f"{reservation_date} - {rooms[room]} - {name} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
                         if answer.lower() == "y":
-                            cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id,))
+                            cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id))
                             conn.commit()
                             print(f"キャンセル完了: {reservation_date} - {rooms[room]} - {name} 様")
                             return # 関数の終了
