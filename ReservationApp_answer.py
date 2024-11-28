@@ -23,8 +23,7 @@ def init_db():
 
 # メイン
 def main():
-    # データベースを初期化
-    init_db()
+    init_db() # データベースを初期化
     while True:
         print("\n予約システムメニュー")
         print("1. 新規予約")
@@ -45,61 +44,61 @@ def main():
             # システム終了
             print("システムを終了します。")
             break # ループを抜ける
+        # 1-4以外が入力された場合
         else:
             print("無効な選択です。もう一度お試しください。")
 
 # 日付の形式確認、当日以降のみ予約可能にする処理
-def validate_date(date):
-    if len(date) != 8:
-        print("無効な形式です。YYYYMMDD 形式で正しい日付を入力してください。")
-        return False
-    try:
-        # 入力された日付をパース
-        input_date = datetime.strptime(date, "%Y%m%d").date()
-        # 現在の日付を取得
-        today = datetime.today().date()
-        # 入力された日付が当日以降ならTrueを返す
-        if input_date >= today:
-            return True
-        # 前日以前の日付が入力されたとき
-        else:
-            print(f"無効な日付です。 {today} 以降の日付を入力してください。")
-            return False
-    # 無効な形式での入力
-    except ValueError:
-        print("無効な入力です。YYYYMMDD 形式で正しい日付を入力してください。")
-        return False
+def validate_date():
+    while True:
+        date = input("予約日を YYYYMMDD 形式で入力してください: ")
+        if len(date) != 8:
+            print("無効な形式です。YYYYMMDD 形式で正しい日付を入力してください。")
+        try:
+            # 入力された日付をパース
+            input_date = datetime.strptime(date, "%Y%m%d").date()
+            # 現在の日付を取得
+            today = datetime.today().date()
+            # 入力された日付が当日以降ならinput_dateを返す
+            if input_date >= today:
+                return input_date
+            # 前日以前の日付が入力されたとき
+            else:
+                print(f"無効な日付です。 {today} 以降の日付を入力してください。")
+        # 無効な形式での入力
+        except ValueError:
+            print("無効な入力です。YYYYMMDD 形式で正しい日付を入力してください。")
 
 # 予約の作成
 def make_reservation():
     # 予約情報の入力
-    date = input("予約日を YYYYMMDD 形式で入力してください: ")
-    # 日付の形式と当日以降か確認
-    if not validate_date(date):
-        return # 関数の終了
-    room_input = input("部屋を選択してください（0: 藤、1: 桜、2: 椿）: ")
-    try:
-        room = int(room_input) # 数値として取得
-        if room in [0, 1, 2]:
-            name = input("お客様の氏名を入力してください: ")
-            conn = sqlite3.connect('reservations.db')
-            cursor = conn.cursor()
-            # 予約の重複確認(同じ日付と部屋で予約があるか確認)
-            cursor.execute("SELECT * FROM reservations WHERE date = ? AND room = ?", (date, room))
-            if cursor.fetchone():
-                print(f"予約失敗: {date} に {rooms[room]} は既に予約されています。")
-            # 重複なくループ終了した場合の処理
+    while True:
+        # 日付の形式と当日以降か確認
+        reservation_date = validate_date()
+        room_input = input("部屋を選択してください（0: 藤、1: 桜、2: 椿）: ")
+        try:
+            room = int(room_input) # 数値として取得
+            if room in [0, 1, 2]:
+                conn = sqlite3.connect('reservations.db')
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM reservations WHERE date = ? AND room = ?", (reservation_date, room))
+                # 予約の重複確認(同じ日付と部屋で予約があるか確認)
+                if cursor.fetchone():
+                    print(f"予約失敗: {reservation_date} に {rooms[room]} は既に予約されています。")
+                # 重複なくループ終了した場合の処理
+                else:
+                    name = input("お客様の氏名を入力してください: ")
+                    cursor.execute("INSERT INTO reservations (date, room, name) VALUES (?, ?, ?)", (reservation_date, room, name))
+                    conn.commit()
+                    print(f"予約完了: {reservation_date} - {rooms[room]} - {name} 様")
+                    break
+                conn.close()
+            # 0-2以外の数字が入力されたとき
             else:
-                cursor.execute("INSERT INTO reservations (date, room, name) VALUES (?, ?, ?)", (date, room, name))
-                conn.commit()
-                print(f"予約完了: {date} - {rooms[room]} - {name} 様")
-            conn.close()
-        # 0-2以外の数字が入力されたとき
-        else:
-            print("無効な番号です。0、1、2のいずれかを選択してください。")
-    # 数字以外が入力されたとき
-    except ValueError:
-        print("無効な入力です。0、1、2いずれかの数字を入力してください。")
+                print("無効な番号です。0、1、2のいずれかを選択してください。")
+        # 数字以外が入力されたとき
+        except ValueError:
+            print("無効な入力です。0、1、2いずれかの数字を入力してください。")
 
 # 現在の予約一覧を表示
 def show_reservations():
@@ -121,43 +120,43 @@ def show_reservations():
 
 # 予約のキャンセル
 def cancel_reservation():
-    date = input("キャンセルする予約日を YYYYMMDD 形式で入力してください: ")
-    # 日付の形式と当日以降か確認
-    if not validate_date(date):
-        return # 関数の終了
-    room_input = input("キャンセルする部屋を選択してください（0: 藤、1: 桜、2: 椿）: ") 
-    try:
-        room = int(room_input) # 数値として取得
-        if room in [0, 1, 2]:
-            conn = sqlite3.connect('reservations.db')
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, name FROM reservations WHERE date = ? AND room = ?", (date, room))
-            result = cursor.fetchone()
-            if result:
-                reservation_id, name = result
-                while True:
-                    # クッションメッセージ
-                    answer = input(f"{date} - {rooms[room]} - {name} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
-                    if answer.lower() == "y":
-                        cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id,))
-                        conn.commit()
-                        print(f"キャンセル完了: {date} - {rooms[room]} - {name} 様")
-                        break
-                    elif answer.lower() == "n":
-                        print("キャンセル処理が中止されました。")
-                        break
-                    else:
-                        print("無効な入力です。「Y」または「N」を入力してください。") 
-            # 一致する予約がないとき
+    # キャンセル情報の入力
+    while True:
+        # 日付の形式と当日以降か確認
+        reservation_date = validate_date()
+        room_input = input("部屋を選択してください（0: 藤、1: 桜、2: 椿）: ") 
+        try:
+            room = int(room_input) # 数値として取得
+            if room in [0, 1, 2]:
+                conn = sqlite3.connect('reservations.db')
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, name FROM reservations WHERE date = ? AND room = ?", (reservation_date, room))
+                result = cursor.fetchone()
+                if result:
+                    reservation_id, name = result
+                    while True:
+                        # クッションメッセージ
+                        answer = input(f"{reservation_date} - {rooms[room]} - {name} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
+                        if answer.lower() == "y":
+                            cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id,))
+                            conn.commit()
+                            print(f"キャンセル完了: {reservation_date} - {rooms[room]} - {name} 様")
+                            return # 関数の終了
+                        elif answer.lower() == "n":
+                            print("キャンセル処理が中止されました。")
+                            break
+                        else:
+                            print("無効な入力です。「Y」または「N」を入力してください。") 
+                # 一致する予約がないとき
+                else:
+                    print(f"キャンセル失敗: 予約が見つかりません。")
+                conn.close()
+            # 0-2以外の数字が入力されたとき
             else:
-                print(f"キャンセル失敗: 予約が見つかりません。")
-            conn.close()
-        # 0-2以外の数字が入力されたとき
-        else:
-            print("無効な番号です。0、1、2のいずれかを選択してください。")
-    # 数字以外が入力されたとき
-    except ValueError:
-        print("無効な入力です。0、1、2いずれかの数字を入力してください。")
+                print("無効な番号です。0、1、2のいずれかを選択してください。")
+        # 数字以外が入力されたとき
+        except ValueError:
+            print("無効な入力です。0、1、2いずれかの数字を入力してください。")
 
 # メインの実行
 main()

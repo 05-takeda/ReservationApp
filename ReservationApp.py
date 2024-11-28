@@ -23,6 +23,7 @@ def init_db():
 
 # メイン
 def main():
+    init_db() # データベースを初期化
     while True:
         print("\n予約システムメニュー")
         print("1. 新規予約")
@@ -43,6 +44,7 @@ def main():
             # システム終了
             print("システムを終了します。")
             break # ループを抜ける
+        # 1-4以外が入力された場合
         else:
             print("無効な選択です。もう一度お試しください。")
 
@@ -59,9 +61,11 @@ def validate_date(date):
         # 入力された日付が当日以降ならTrueを返す
         if input_date >= today:
             return True
+        # 前日以前の日付が入力されたとき
         else:
             print(f"無効な日付です。 {today} 以降の日付を入力してください。")
             return False
+    # 無効な形式での入力
     except ValueError:
         print("無効な入力です。YYYYMMDD 形式で正しい日付を入力してください。")
         return False
@@ -78,11 +82,12 @@ def make_reservation():
         room = int(room_input) # 数値として取得
         if room in [0, 1, 2]:
             name = input("お客様の氏名を入力してください: ")
+            conn = sqlite3.connect('reservations.db')
+            cursor = conn.cursor
+            cursor.execute("SELECT * FROM reservations WHERE date = ? AND room = ?", (date, room))
             # 予約の重複確認(同じ日付と部屋で予約があるか確認)
-            for reservation in reservations:
-                if reservation['date'] == date and reservation['room'] == room:
-                    print(f"予約失敗: {date} に {rooms[room]} は既に予約されています。")
-                    return
+            if cursor.fetchone():
+                print(f"予約失敗: {date} に {rooms[room]} は既に予約されています。")
             # 重複なくループ終了した場合の処理
             reservations.append({'date': date, 'room': room, 'name': name}) # 辞書型で追加(append)
             print(f"予約完了: {date} - {rooms[room]} - {name} 様")
