@@ -92,13 +92,14 @@ def make_reservation():
                     conn.commit()
                     print(f"予約完了: {reservation_date} - {rooms[room]} - {name} 様")
                     break
-                conn.close()
             # 0-2以外の数字が入力されたとき
             else:
                 print("無効な番号です。0、1、2のいずれかを選択してください。")
         # 数字以外が入力されたとき
         except ValueError:
             print("無効な入力です。0、1、2いずれかの数字を入力してください。")
+        finally:
+            conn.close()
 
 # 現在の予約一覧を表示
 def show_reservations():
@@ -144,19 +145,20 @@ def cancel_reservation():
                             return # 関数の終了
                         elif answer.lower() == "n":
                             print("キャンセル処理が中止されました。")
-                            break
+                            return
                         else:
                             print("無効な入力です。「Y」または「N」を入力してください。") 
                 # 一致する予約がないとき
                 else:
                     print(f"キャンセル失敗: 予約が見つかりません。")
-                conn.close()
             # 0-2以外の数字が入力されたとき
             else:
                 print("無効な番号です。0、1、2のいずれかを選択してください。")
         # 数字以外が入力されたとき
         except ValueError:
             print("無効な入力です。0、1、2いずれかの数字を入力してください。")
+        finally:
+            conn.close()
 
 # メインの実行
 main()
