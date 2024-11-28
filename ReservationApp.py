@@ -49,26 +49,25 @@ def main():
             print("無効な選択です。もう一度お試しください。")
 
 # 日付の形式確認、当日以降のみ予約可能にする処理
-def validate_date(date):
-    if len(date) != 8:
-        print("無効な形式です。YYYYMMDD 形式で正しい日付を入力してください。")
-        return False
-    try:
-        # 入力された日付をパース
-        input_date = datetime.strptime(date, "%Y%m%d").date()
-        # 現在の日付を取得
-        today = datetime.today().date()
-        # 入力された日付が当日以降ならTrueを返す
-        if input_date >= today:
-            return True
-        # 前日以前の日付が入力されたとき
-        else:
-            print(f"無効な日付です。 {today} 以降の日付を入力してください。")
-            return False
-    # 無効な形式での入力
-    except ValueError:
-        print("無効な入力です。YYYYMMDD 形式で正しい日付を入力してください。")
-        return False
+def validate_date():
+    while True:
+        date = input("予約日を YYYYMMDD 形式で入力してください: ")
+        if len(date) != 8:
+            print("無効な形式です。YYYYMMDD 形式で正しい日付を入力してください。")
+        try:
+            # 入力された日付をパース
+            input_date = datetime.strptime(date, "%Y%m%d").date()
+            # 現在の日付を取得
+            today = datetime.today().date()
+            # 入力された日付が当日以降ならinput_dateを返す
+            if input_date >= today:
+                return input_date
+            # 前日以前の日付が入力されたとき
+            else:
+                print(f"無効な日付です。 {today} 以降の日付を入力してください。")
+        # 無効な形式での入力
+        except ValueError:
+            print("無効な入力です。YYYYMMDD 形式で正しい日付を入力してください。")
 
 # 予約の作成
 def make_reservation():
