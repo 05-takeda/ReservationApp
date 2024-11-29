@@ -91,16 +91,15 @@ def make_reservation():
                     cursor.execute("INSERT INTO reservations (date, room, name) VALUES (?, ?, ?)", (reservation_date, room, name))
                     conn.commit()
                     print(f"予約完了: {reservation_date} - {rooms[room]} - {name} 様")
+                    conn.close()
                     break
             # 0-2以外の数字が入力されたとき
             else:
-                print("無効な番号です。0、1、2のいずれかを選択してください。")
+                print("無効な番号です。「0」「1」「2」のいずれかを選択してください。")
         # 数字以外が入力されたとき
         except ValueError:
-            print("無効な入力です。0、1、2いずれかの数字を入力してください。")
-        finally:
-            conn.close()
-
+            print("無効な入力です。「0」「1」「2」いずれかの数字を入力してください。")
+            
 # 現在の予約一覧を表示
 def show_reservations():
     conn = sqlite3.connect('reservations.db')
@@ -139,26 +138,27 @@ def cancel_reservation():
                         # クッションメッセージ
                         answer = input(f"{reservation_date} - {rooms[room]} - {name} 様の予約をキャンセルしますか？（Y: はい、N: いいえ）: ")
                         if answer.lower() == "y":
+                            # (reservation_id,)とすることでタプルとして認識
                             cursor.execute("DELETE FROM reservations WHERE id = ?", (reservation_id,))
                             conn.commit()
                             print(f"キャンセル完了: {reservation_date} - {rooms[room]} - {name} 様")
+                            conn.close()
                             return # 関数の終了
                         elif answer.lower() == "n":
                             print("キャンセル処理が中止されました。")
+                            conn.close()
                             return
                         else:
-                            print("無効な入力です。Y、Nのいずれかを入力してください。")
+                            print("無効な入力です。「Y」または「N」を入力してください。")
                 # 一致する予約がないとき
                 else:
                     print(f"キャンセル失敗:予約が見つかりません。")
             # 0-2以外の数字が入力されたとき
             else:
-                print("無効な番号です。0、1、2のいずれかを選択してください。")
+                print("無効な番号です。「0」「1」「2」のいずれかを選択してください。")
         # 数字以外が入力されたとき
         except ValueError:
-            print("無効な入力です。0、1、2いずれかの数字を入力してください。")
-        finally:
-            conn.close()
+            print("無効な入力です。「0」「1」「2」いずれかの数字を入力してください。")
 
 # メインの実行
 main()
